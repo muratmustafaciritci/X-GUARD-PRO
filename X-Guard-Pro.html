@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <title>X-Guard iOS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            background: #000000;
+            color: #ffffff;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: calc(84px + env(safe-area-inset-bottom));
+            min-height: 100vh;
+        }
+        
+        /* iOS Dynamic Island / Notch uyumu */
+        .ios-header {
+            position: sticky;
+            top: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 12px 20px;
+            padding-top: max(12px, env(safe-area-inset-top));
+            border-bottom: 0.5px solid rgba(255,255,255,0.1);
+            z-index: 100;
+        }
+        
+        .ios-card {
+            background: #1c1c1e;
+            border-radius: 12px;
+            margin: 12px 16px;
+            overflow: hidden;
+        }
+        
+        .ios-cell {
+            padding: 16px;
+            border-bottom: 0.5px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .ios-cell:last-child {
+            border-bottom: none;
+        }
+        
+        .ios-button {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            width: calc(100% - 32px);
+            margin: 16px;
+            -webkit-appearance: none;
+        }
+        
+        .ios-button:active {
+            opacity: 0.7;
+        }
+        
+        .ios-button.stop {
+            background: #ff3b30;
+        }
+        
+        .ios-segment {
+            display: flex;
+            background: #2c2c2e;
+            border-radius: 8px;
+            padding: 2px;
+            margin: 16px;
+        }
+        
+        .ios-segment-btn {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #8e8e93;
+        }
+        
+        .ios-segment-btn.active {
+            background: #636366;
+            color: white;
+        }
+        
+        .ios-switch {
+            width: 51px;
+            height: 31px;
+            background: #34c759;
+            border-radius: 16px;
+            position: relative;
+            transition: 0.2s;
+        }
+        
+        .ios-switch.off {
+            background: #3a3a3c;
+        }
+        
+        .ios-switch::after {
+            content: '';
+            position: absolute;
+            width: 27px;
+            height: 27px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 22px;
+            transition: 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .ios-switch.off::after {
+            left: 2px;
+        }
+        
+        .ios-input {
+            width: 100%;
+            background: #1c1c1e;
+            border: none;
+            padding: 16px;
+            color: white;
+            font-size: 17px;
+            border-radius: 12px;
+            margin: 8px 16px;
+            width: calc(100% - 32px);
+            -webkit-appearance: none;
+        }
+        
+        .ios-input:focus {
+            outline: none;
+            background: #2c2c2e;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 16px;
+        }
+        
+        .stat-box {
+            background: #1c1c1e;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 34px;
+            font-weight: 700;
+            color: #007aff;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .ios-tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 0.5px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-around;
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-top: 8px;
+            z-index: 100;
+        }
+        
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px 12px;
+            color: #8e8e93;
+            font-size: 10px;
+        }
+        
+        .tab-item.active {
+            color: #007aff;
+        }
+        
+        .tab-icon {
+            width: 28px;
+            height: 28px;
+            margin-bottom: 2px;
+        }
+        
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #34c759;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.9); }
+        }
+        
+        .hidden { display: none !important; }
+        
+        /* iOS 17 style */
+        .ios-label {
+            font-size: 17px;
+            color: white;
+        }
+        
+        .ios-sublabel {
+            font-size: 13px;
+            color: #8e8e93;
+            margin-top: 2px;
+        }
+        
+        .queue-item {
+            background: #2c2c2e;
+            margin: 8px 16px;
+            padding: 16px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .badge {
+            background: #ff3b30;
+            color: white;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        
+        .log-entry {
+            padding: 12px 16px;
+            border-bottom: 0.5px solid rgba(255,255,255,0.05);
+            font-size: 13px;
+            font-family: 'SF Mono', monospace;
+        }
+        
+        .log-time { color: #8e8e93; margin-right: 8px; }
+        .log-success { color: #34c759; }
+        .log-error { color: #ff3b30; }
+        .log-warn { color: #ff9500; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="ios-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 17px; font-weight: 600;">X-Guard</h1>
+                <p style="font-size: 13px; color: #8e8e93;" id="statusText">Bot Pasif</p>
+            </div>
+            <div id="statusDot" style="width: 8px; height: 8px; background: #8e8e93; border-radius: 50%;"></div>
+        </div>
+    </div>
+
+    <!-- Dashboard Tab -->
+    <div id="tab-dashboard" class="tab-content">
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div class="stat-number" id="tweetStat">0</div>
+                <div style="font-size: 13px; color: #8e8e93; margin-top: 4px;">Tweet/Saat</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="followStat" style="color: #af52de;">0</div>
+                <div style="font-size: 13px; color: #8e8e93; margin-top: 4px;">Takip/Gün</div>
+            </div>
+        </div>
+
+        <div class="ios-card">
+            <div class="ios-cell">
+                <div>
+                    <div class="ios-label">Spam Koruması</div>
+                    <div class="ios-sublabel">Şüpheli içerikleri engelle</div>
+                </div>
+                <div class="ios-switch" onclick="toggle(this, 'spam')"></div>
+            </div>
+            <div class="ios-cell">
+                <div>
+                    <div class="ios-label">Hız Limiti</div>
+                    <div class="ios-sublabel">Aşırı hızı önle</div>
+                </div>
+                <div class="ios-switch" onclick="toggle(this, 'rate')"></div>
+            </div>
+            <div class="ios-cell">
+                <div>
+                    <div class="ios-label">Takip Limiti</div>
+                    <div class="ios-sublabel">Günlük 50 sınırı</div>
+                </div>
+                <div class="ios-switch" onclick="toggle(this, 'follow')"></div>
+            </div>
+        </div>
+
+        <div class="ios-card" style="padding: 16px;">
+            <div style="font-size: 13px; color: #8e8e93; margin-bottom: 8px;">SIRADAKİ İŞLEM</div>
+            <div id="nextAction" style="font-size: 17px; color: white;">Kuyruk boş</div>
+            <div style="margin-top: 12px; background: #2c2c2e; height: 4px; border-radius: 2px; overflow: hidden;">
+                <div id="progressBar" style="width: 0%; height: 100%; background: #007aff; transition: width 0.3s;"></div>
+            </div>
+        </div>
+
+        <button class="ios-button" id="mainBtn" onclick="toggleBot()">Botu Başlat</button>
+    </div>
+
+    <!-- Actions Tab -->
+    <div id="tab-actions" class="tab-content hidden">
+        <div class="ios-segment">
+            <div class="ios-segment-btn active" onclick="switchAction('tweet')">Tweet</div>
+            <div class="ios-segment-btn" onclick="switchAction('follow')">Takip</div>
+            <div class="ios-segment-btn" onclick="switchAction('retweet')">RT</div>
+            <div class="ios-segment-btn" onclick="switchAction('like')">Like</div>
+        </div>
+
+        <div id="action-tweet">
+            <textarea class="ios-input" rows="4" placeholder="Ne düşünüyorsun?" id="tweetText" maxlength="280"></textarea>
+            <div style="text-align: right; padding: 0 16px; color: #8e8e93; font-size: 13px;">
+                <span id="charCount">280</span>
+            </div>
+        </div>
+
+        <div id="action-follow" class="hidden">
+            <input type="text" class="ios-input" placeholder="@kullaniciadi" id="followInput">
+        </div>
+
+        <div id="action-retweet" class="hidden">
+            <input type="text" class="ios-input" placeholder="Tweet ID" id="retweetInput">
+        </div>
+
+        <div id="action-like" class="hidden">
+            <input type="text" class="ios-input" placeholder="Tweet ID" id="likeInput">
+        </div>
+
+        <button class="ios-button" onclick="addAction()">Sıraya Ekle</button>
+    </div>
+
+    <!-- Queue Tab -->
+    <div id="tab-queue" class="tab-content hidden">
+        <div style="padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 22px; font-weight: 700;">Kuyruk</h2>
+            <span class="badge" id="queueBadge">0</span>
+        </div>
+        <div id="queueList">
+            <div style="text-align: center; padding: 60px 20px; color: #8e8e93;">
+                Henüz işlem yok
+            </div>
+        </div>
+        <button class="ios-button stop" onclick="clearQueue()" style="margin-top: 20px;">Tümünü Temizle</button>
+    </div>
+
+    <!-- Logs Tab -->
+    <div id="tab-logs" class="tab-content hidden">
+        <div style="padding: 16px;">
+            <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 16px;">Loglar</h2>
+        </div>
+        <div id="logList" style="padding-bottom: 20px;">
+            <div class="log-entry">
+                <span class="log-time">09:41</span>
+                <span>Sistem hazır</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="ios-tab-bar">
+        <div class="tab-item active" onclick="switchTab('dashboard', this)">
+            <svg class="tab-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+            Panel
+        </div>
+        <div class="tab-item" onclick="switchTab('actions', this)">
+            <svg class="tab-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Eylem
+        </div>
+        <div class="tab-item" onclick="switchTab('queue', this)">
+            <svg class="tab-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+            Kuyruk
+        </div>
+        <div class="tab-item" onclick="switchTab('logs', this)">
+            <svg class="tab-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            Loglar
+        </div>
+    </div>
+
+    <script>
+        // State
+        let botActive = false;
+        let queue = [];
+        let currentAction = 'tweet';
+        let protections = { spam: true, rate: true, follow: true };
+        let lastAction = { tweet: 0, follow: 0, retweet: 0, like: 0 };
+        let stats = { tweets: [], follows: [] };
+
+        // Character count
+        document.getElementById('tweetText').addEventListener('input', function(e) {
+            document.getElementById('charCount').textContent = 280 - e.target.value.length;
+        });
+
+        function switchTab(tab, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+            if (el) el.classList.add('active');
+        }
+
+        function switchAction(action) {
+            currentAction = action;
+            document.querySelectorAll('.ios-segment-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            ['tweet', 'follow', 'retweet', 'like'].forEach(a => {
+                document.getElementById('action-' + a).classList.add('hidden');
+            });
+            document.getElementById('action-' + action).classList.remove('hidden');
+        }
+
+        function toggle(el, type) {
+            el.classList.toggle('off');
+            protections[type] = !el.classList.contains('off');
+            log(`${type}: ${protections[type] ? 'Açık' : 'Kapalı'}`);
+        }
+
+        function toggleBot() {
+            botActive = !botActive;
+            const btn = document.getElementById('mainBtn');
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            
+            if (botActive) {
+                btn.textContent = 'Botu Durdur';
+                btn.classList.add('stop');
+                dot.className = 'pulse-dot';
+                dot.style.background = '#34c759';
+                text.textContent = 'Bot Aktif';
+                log('Bot başlatıldı', 'success');
+                processQueue();
+            } else {
+                btn.textContent = 'Botu Başlat';
+                btn.classList.remove('stop');
+                dot.className = '';
+                dot.style.background = '#8e8e93';
+                text.textContent = 'Bot Pasif';
+                log('Bot durduruldu');
+            }
+        }
+
+        function addAction() {
+            let content = '';
+            
+            if (currentAction === 'tweet') {
+                content = document.getElementById('tweetText').value;
+                if (!content) return;
+                if (protections.spam && checkSpam(content)) {
+                    alert('Spam içerik!');
+                    return;
+                }
+                document.getElementById('tweetText').value = '';
+                document.getElementById('charCount').textContent = '280';
+            } else if (currentAction === 'follow') {
+                content = document.getElementById('followInput').value;
+                if (!content) return;
+                document.getElementById('followInput').value = '';
+            } else if (currentAction === 'retweet') {
+                content = document.getElementById('retweetInput').value;
+                if (!content) return;
+                document.getElementById('retweetInput').value = '';
+            } else {
+                content = document.getElementById('likeInput').value;
+                if (!content) return;
+                document.getElementById('likeInput').value = '';
+            }
+            
+            queue.push({ type: currentAction, content, id: Date.now() });
+            updateQueue();
+            log(`${currentAction} eklendi`);
+            
+            if (botActive) processQueue();
+        }
+
+        function checkSpam(text) {
+            const bad = ['bedava','kazan','para','http','!!!','$$$'];
+            return bad.some(w => text.toLowerCase().includes(w));
+        }
+
+        function updateQueue() {
+            document.getElementById('queueBadge').textContent = queue.length;
+            const list = document.getElementById('queueList');
+            
+            if (queue.length === 0) {
+                list.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #8e8e93;">Henüz işlem yok</div>';
+                document.getElementById('nextAction').textContent = 'Kuyruk boş';
+                return;
+            }
+            
+            const next = queue[0];
+            document.getElementById('nextAction').textContent = `${next.type}: ${next.content.substring(0, 30)}...`;
+            
+            list.innerHTML = queue.map((item, i) => `
+                <div class="queue-item">
+                    <div>
+                        <div style="font-size: 13px; color: #8e8e93; text-transform: uppercase;">${item.type}</div>
+                        <div style="margin-top: 4px;">${item.content.substring(0, 40)}...</div>
+                    </div>
+                    <button onclick="removeQueue(${i})" style="background: #ff3b30; color: white; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 20px;">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removeQueue(i) {
+            queue.splice(i, 1);
+            updateQueue();
+        }
+
+        function clearQueue() {
+            queue = [];
+            updateQueue();
+            log('Kuyruk temizlendi');
+        }
+
+        async function processQueue() {
+            if (!botActive || queue.length === 0) return;
+            
+            const item = queue[0];
+            const now = Date.now();
+            
+            // Rate limit check
+            if (protections.rate) {
+                const wait = getWaitTime(item.type, now);
+                if (wait > 0) {
+                    updateProgress(wait, item.type);
+                    setTimeout(processQueue, 1000);
+                    return;
+                }
+            }
+            
+            // Execute
+            log(`${item.type} yapılıyor...`);
+            await new Promise(r => setTimeout(r, 1500));
+            
+            // Success
+            queue.shift();
+            lastAction[item.type] = now;
+            if (item.type === 'tweet') stats.tweets.push(now);
+            if (item.type === 'follow') stats.follows.push(now);
+            
+            updateQueue();
+            updateStats();
+            log(`${item.type} tamamlandı`, 'success');
+            
+            if (botActive && queue.length > 0) {
+                setTimeout(processQueue, 1000);
+            }
+        }
+
+        function getWaitTime(type, now) {
+            const times = { tweet: 30000, follow: 60000, retweet: 15000, like: 5000 };
+            const last = lastAction[type];
+            if (!last) return 0;
+            return Math.max(0, times[type] - (now - last));
+        }
+
+        function updateProgress(wait, type) {
+            const max = { tweet: 30000, follow: 60000, retweet: 15000, like: 5000 };
+            const pct = 100 - (wait / max[type] * 100);
+            document.getElementById('progressBar').style.width = pct + '%';
+        }
+
+        function updateStats() {
+            const hour = Date.now() - 3600000;
+            const day = Date.now() - 86400000;
+            document.getElementById('tweetStat').textContent = stats.tweets.filter(t => t > hour).length;
+            document.getElementById('followStat').textContent = stats.follows.filter(t => t > day).length;
+        }
+
+        function log(msg, type) {
+            const time = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerHTML = `<span class="log-time">${time}</span><span class="log-${type || 'info'}">${msg}</span>`;
+            const list = document.getElementById('logList');
+            list.insertBefore(div, list.firstChild);
+        }
+
+        // Update loop
+        setInterval(() => {
+            updateStats();
+            if (botActive && queue.length > 0) {
+                const wait = getWaitTime(queue[0].type, Date.now());
+                updateProgress(wait, queue[0].type);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
